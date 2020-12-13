@@ -1,97 +1,65 @@
-var taskList = new TaskList();
-var validation = new Validation();
+var toDoTask = new ToDoTasks();
 
-getLocalStorage();
-/**
- * Add Task
- */
-getEle("addItem").addEventListener("click", function () {
-  var newTask = getEle("newTask").value;
+function getElement(input) {
+  return document.getElementById(input);
+}
 
-  var isValid = true;
-  isValid &= validation.checkEmty(
-    newTask,
-    "notiInput",
-    "(*) Vui lòng nhập thông tin"
-  );
-
-  if (!isValid) return;
-
+getElement("addItem").addEventListener("click", function () {
+  var taskName = getElement("newTask").value;
   var id = Math.random();
-  var task = new Task(id, newTask, "todo");
-  taskList.addTask(task);
-  createTable(taskList.arr);
-  setLocalStorage();
+  var status = 0;
+
+  var task = new Task(id, taskName, status);
+  toDoTask.addTask(task);
+
+  createToDoList(toDoTask.arr);
+  createCompletedTask(toDoTask.arr);
 });
 
-/**
- * Delete Task
- */
-function deleteTask(id) {
-  taskList.deleteTask(id);
-  createTable(taskList.arr);
-  setLocalStorage();
+function createToDoList(arr) {
+  var content = "";
+  arr.map((item) => {
+    content += `
+        <li><p>${item.taskName}</p>
+            <button id="deleteButton" onclick="deleteButton('${item.id}')"><i class="fa fa-trash"></i></button>
+            <button id="checkButton" onclick="updateButton('${item.id}')"><i class="fa fa-check"></i></button>
+        </li>
+    `;
+  });
+
+  getElement("todo").innerHTML = content;
 }
 
-/**
- * Change Status
- */
-function changeStatus(id) {
-  var task = taskList.getTaskById(id);
-  task.status = task.status === "todo" ? "completed" : "todo";
-  taskList.updateTask(task);
-  createTable(taskList.arr);
-  setLocalStorage();
+function deleteButton(id) {
+  toDoTask.deleteTask(id);
+  createToDoList(toDoTask.arr);
 }
 
-function createTable(arr) {
-  var contentTodo = "";
-  var contentCompleted = "";
-  getEle("todo").innerHTML = "";
-  getEle("completed").innerHTML = "";
-  arr.forEach(function (item, index) {
-    if (item.status === "todo") {
-      contentTodo += renderListLiHtml(item);
-      getEle("todo").innerHTML = contentTodo;
-    } else if (item.status === "completed") {
-      contentCompleted += renderListLiHtml(item);
-      getEle("completed").innerHTML = contentCompleted;
+function updateButton(id) {
+  var taskDetail = toDoTask.getDetailTask(id);
+  var status = 1;
+  var taskName = taskDetail.taskName;
+  var id = taskDetail.id;
+  var updateTask = new Task(id, taskName, status);
+  toDoTask.updateStatus(updateTask);
+
+  // createToDoList(toDoTask.arr);
+
+  createCompletedTask(toDoTask.arr);
+}
+
+function createCompletedTask(arr) {
+  var content = "";
+  arr.map((item) => {
+    if (item.status === 1) {
+      content += `
+      <li><p>${item.taskName}</p>
+          <button id="deleteButton" onclick="deleteButton('${item.id}')"><i class="fa fa-trash"></i></button>
+      </li>
+  `;
+      deleteButton(item.id);
     }
   });
-}
 
-function renderListLiHtml(item) {
-  return `<li>
-      <span>${item.taskName}</span>
-      <div class="buttons">
-        <button
-          class="remove"
-          onclick="deleteTask(${item.id})"
-        >
-          <i class="fa fa-trash-alt"></i>
-        </button>
-        <button
-          class="complete"
-          onclick="changeStatus(${item.id})"
-        >
-          <i class="far fa-check-circle"></i>
-          <i class="fas fa-check-circle"></i>
-        </button>
-      </div>
-    </li>`;
-}
-
-function setLocalStorage() {
-  localStorage.setItem("TaskList", JSON.stringify(taskList.arr));
-}
-
-function getLocalStorage() {
-  if (localStorage.getItem("TaskList")) {
-    taskList.arr = JSON.parse(localStorage.getItem("TaskList"));
-    createTable(taskList.arr);
-  }
-}
-
-function getEle(id) {
-  return document.getElementById(id);
+  getElement("completed").innerHTML = content;
 }
